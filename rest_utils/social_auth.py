@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured
 
 from rest_framework import views, status
 from rest_framework import serializers
