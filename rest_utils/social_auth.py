@@ -2,18 +2,29 @@
 from django.exceptions import ImproperlyConfigured
 
 from rest_framework import views, status
+from rest_framework import serializers
 from rest_framework.response import Response
 
-from social.apps.django_app.utils import load_strategy
-from social.apps.django_app.views import _do_login
-from social.exceptions import AuthAlreadyAssociated
+try:
+    from social.apps.django_app.utils import load_strategy
+    from social.apps.django_app.views import _do_login
+    from social.exceptions import AuthAlreadyAssociated
+except ImportError:
+    raise ImproperlyConfigured("SocialAuthView require python-social-auth")
 
-from .serializers import SocialAuthSerializer
+
+class SocialAuthSerializer(serializers.Serializer):
+    """
+    Serializer to receive social auth for python-social-auth
+    """
+    backend = serializers.CharField()
+    token = serializers.CharField()
+    code = serializers.CharField()
 
 
 class SocialAuthView(views.APIView):
     """
-    View to authenticate socal auth tokens with Python-social-auth. It accepts
+    View to authenticate social auth tokens with python-social-auth. It accepts
     a token and backend. It will validate the token with the backend. If
     successfully it returns the local user associated with the social user. If
     there is no associated user it will associate the current logged in user or
