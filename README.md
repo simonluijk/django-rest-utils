@@ -11,7 +11,7 @@ OVERVIEW
 # Requirements
 
 * Python (2.6, 2.7, 3.3)
-* Django (1.4, 1.5, 1.6)
+* Django (1.5, 1.6)
 * python-social-auth if using SocialAuthView
 
 # Installation
