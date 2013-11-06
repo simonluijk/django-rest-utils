@@ -6,9 +6,8 @@ python:
   - "3.3"
 
 env:
-  - DJANGO="https://www.djangoproject.com/download/1.6c1/tarball/"
+  - DJANGO="django==1.6 --use-mirrors"
   - DJANGO="django==1.5.5 --use-mirrors"
-  - DJANGO="django==1.4.9 --use-mirrors"
 
 install:
   - pip install $DJANGO
@@ -17,8 +16,3 @@ install:
 
 script:
   - python rest_utils/runtests/runtests.py
-
-matrix:
-  exclude:
-    - python: "3.3"
-      env: DJANGO="django==1.4.9 --use-mirrors"
