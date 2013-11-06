@@ -26,9 +26,9 @@ class SocialAuthView(views.APIView):
     """
     View to authenticate social auth tokens with python-social-auth. It accepts
     a token and backend. It will validate the token with the backend. If
-    successfully it returns the local user associated with the social user. If
+    successful it returns the local user associated with the social user. If
     there is no associated user it will associate the current logged in user or
-    create a new user in not logged in. The user is then logged in and returned
+    create a new user if not logged in. The user is then logged in and returned
     to the client.
     """
     user_seriliser = None
