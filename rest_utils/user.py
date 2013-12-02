@@ -26,3 +26,27 @@ class UniqueEmailUserSerializerMixin(object):
             raise serializers.ValidationError(msg)
 
         return attrs
+
+
+class PasswordSerializerMixin(object):
+    """
+    Mixin that sets the user password and strips it from the output.
+    """
+    def to_native(self, *args, **kwargs):
+        try:
+            self.fields.pop('password')
+        except KeyError:
+            pass
+        return super(PasswordSerializerMixin, self).to_native(*args, **kwargs)
+
+    def restore_object(self, attrs, instance=None):
+        self.passwd = attrs.pop('password')
+        self.fields.pop('password')
+
+        return super(PasswordSerializerMixin, self).restore_object(attrs,
+                                                                   instance)
+
+    def save_object(self, obj, **kwargs):
+        if self.passwd:
+            obj.set_password(self.passwd)
+        super(PasswordSerializerMixin, self).save_object(obj, **kwargs)

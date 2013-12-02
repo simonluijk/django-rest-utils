@@ -8,7 +8,7 @@ from django_nose import FastFixtureTestCase as TestCase
 from rest_framework import serializers
 
 from .permissions import DenyCreateOnPutPermission, NotAuthenticatedPermission
-from .user import UniqueEmailUserSerializerMixin
+from .user import UniqueEmailUserSerializerMixin, PasswordSerializerMixin
 
 
 class PermissionsTest(TestCase):
@@ -40,34 +40,45 @@ class PermissionsTest(TestCase):
         self.assertTrue(permission.has_permission(request, view))
 
 
-class UniqueEmailUserSerializer(UniqueEmailUserSerializerMixin,
-                                serializers.ModelSerializer):
+class UserSerializer(UniqueEmailUserSerializerMixin, PasswordSerializerMixin,
+                     serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('email', )
+        fields = ('email', 'password')
 
 
-class CreateUserSerializerTest(TestCase):
+class UserSerializerTest(TestCase):
     def test_validate_email(self):
         """
         Test the same email can not be used twice.
         """
         data = {
             'email': 'user1@example.com',
-            'first_name': 'FName',
-            'last_name': 'LName',
             'password': 'testpassword',
         }
         get_user_model().objects.create(email='user1@example.com')
-        serializer = UniqueEmailUserSerializer(data=data)
+        serializer = UserSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertIn(serializer.error_messages['email_exists'],
                       serializer.errors['email'])
 
         user = Mock()
         user.email = 'user1@example.com'
-        serializer = UniqueEmailUserSerializer(user, data=data)
+        serializer = UserSerializer(user, data=data)
         self.assertTrue(serializer.is_valid())
         with self.assertRaises(KeyError):
             serializer.errors['email']
 
+    def test_password_is_set(self):
+        data = {
+            'email': 'user2@example.com',
+            'password': 'testpassword',
+        }
+
+        user = Mock()
+        user.email = 'user1@example.com'
+        serializer = UserSerializer(user, data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+        user.set_password.assert_called_once_with('testpassword')
+        self.assertNotIn('password', serializer.data.keys())
