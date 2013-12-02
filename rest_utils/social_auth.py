@@ -52,12 +52,18 @@ class SocialAuthView(views.APIView):
                 user=request.user.is_authenticated() and request.user or None
             )
         except AuthAlreadyAssociated:
-            return Response({'status': 'Auth associated with another user.'},
-                            status=status.HTTP_403_FORBIDDEN)
+            data = {
+                'error_code': 'social_already_accociated',
+                'status': 'Auth associated with another user.',
+            }
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
 
         if not user.is_active:
-            return Response({'status': 'Associated user is inactive.'},
-                            status=status.HTTP_403_FORBIDDEN)
+            data = {
+                'error_code': 'social_inactive',
+                'status': 'Associated user is inactive.',
+            }
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
 
         _do_login(strategy, user)
 
