@@ -8,7 +8,7 @@ class UniqueEmailUserSerializerMixin(object):
     Mixin that verifies the email is not in use.
     """
     default_error_messages = {
-        'email_exists': 'Email already in use!'
+        'email_exists': 'User with this Email address already exists.'
     }
 
     def validate_email(self, attrs, source):
