@@ -57,6 +57,13 @@ class SocialAuthView(views.APIView):
             }
             return Response(data, status=status.HTTP_403_FORBIDDEN)
 
+        if not user:
+            data = {
+                'error_code': 'social_no_user',
+                'status': 'No associated user.',
+            }
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
+
         if not user.is_active:
             data = {
                 'error_code': 'social_inactive',
