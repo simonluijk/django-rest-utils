@@ -18,8 +18,7 @@ class SocialAuthSerializer(serializers.Serializer):
     Serializer to receive social auth for python-social-auth
     """
     backend = serializers.CharField()
-    token = serializers.CharField()
-    code = serializers.CharField()
+    access_token = serializers.CharField()
 
 
 class SocialAuthView(views.APIView):
@@ -31,26 +30,26 @@ class SocialAuthView(views.APIView):
     create a new user if not logged in. The user is then logged in and returned
     to the client.
     """
+    socal_seriliser = SocialAuthSerializer
     user_seriliser = None
 
     def post(self, request):
-        serializer = SocialAuthSerializer(data=request.DATA,
+        serializer = self.socal_seriliser(data=request.DATA,
                                           files=request.FILES)
 
         if serializer.is_valid():
             backend = serializer.data['backend']
-            auth_token = serializer.data['token']
-            code = serializer.data['code']
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
         strategy = load_strategy(request=request, backend=backend)
         try:
-            user = strategy.backend.do_auth(
-                access_token=auth_token, code=code,
-                user=request.user.is_authenticated() and request.user or None
-            )
+            kwargs = dict({(k, i) for k, i in serializer.data.items()
+                          if k != 'backend'})
+            user = request.user
+            kwargs['user'] = user.is_authenticated() and user or None
+            user = strategy.backend.do_auth(**kwargs)
         except AuthAlreadyAssociated:
             data = {
                 'error_code': 'social_already_accociated',
