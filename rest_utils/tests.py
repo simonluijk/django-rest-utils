@@ -2,10 +2,7 @@
 from mock import Mock
 
 from django.http import Http404
-from django.contrib.auth import get_user_model
 from django_nose import FastFixtureTestCase as TestCase
-
-from rest_framework import serializers
 
 from .permissions import DenyCreateOnPutPermission, NotAuthenticatedPermission
 
