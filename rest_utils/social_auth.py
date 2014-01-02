@@ -78,3 +78,63 @@ class SocialAuthView(views.APIView):
             raise ImproperlyConfigured(msg)
         serializer = self.user_seriliser(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+import json
+import hmac
+from base64 import b64encode
+from hashlib import sha1
+from requests import HTTPError
+from social.exceptions import AuthCanceled, AuthTokenError
+from social.backends.oauth import BaseOAuth1
+from social.backends.linkedin import BaseLinkedinAuth
+
+
+class LinkedinJSAPIOAuth(BaseLinkedinAuth, BaseOAuth1):
+    """Linkedin OAuth authentication backend"""
+    name = 'linkedin'
+    SCOPE_SEPARATOR = '+'
+    AUTHORIZATION_URL = 'https://www.linkedin.com/uas/oauth/authenticate'
+    REQUEST_TOKEN_URL = 'https://api.linkedin.com/uas/oauth/requestToken'
+    ACCESS_TOKEN_URL = 'https://api.linkedin.com/uas/oauth/accessToken'
+    ACCESS_TOKEN_METHOD = 'POST'
+
+    def user_data(self, access_token, *args, **kwargs):
+        """Return user data provided"""
+        return self.get_json(
+            self.user_details_url(),
+            params={'format': 'json'},
+            auth=self.oauth_auth(access_token),
+            headers=self.user_data_headers()
+        )
+
+    def validate_bearer_token(self, token):
+        """ Validate token provided by LinkedIN JSAPI. """
+        data = ''.join([token[k] for k in token['signature_order']])
+        secret = self.setting('SECRET')
+        signature = b64encode(hmac.new(secret, data, sha1).digest())
+        return signature == token['signature']
+
+    def do_auth(self, access_token, *args, **kwargs):
+        """ Exchange bearer token before finishing auth. """
+        access_token = json.loads(access_token)
+
+        if not self.validate_bearer_token(access_token):
+            raise AuthTokenError(self)
+
+        try:
+            access_token = self.access_token(access_token)
+        except HTTPError as err:
+            if err.response.status_code == 400:
+                raise AuthCanceled(self)
+            else:
+                raise
+
+        return super(LinkedinJSAPIOAuth, self).do_auth(access_token)
+
+    def access_token(self, token):
+        """Return request for access token value"""
+        data = {'xoauth_oauth2_access_token': token['access_token']}
+        return self.get_querystring(self.ACCESS_TOKEN_URL, data=data,
+                                    auth=self.oauth_auth(token),
+                                    method=self.ACCESS_TOKEN_METHOD)
