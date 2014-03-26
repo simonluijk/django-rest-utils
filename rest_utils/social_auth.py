@@ -30,12 +30,12 @@ class SocialAuthView(views.APIView):
     create a new user if not logged in. The user is then logged in and returned
     to the client.
     """
-    socal_seriliser = SocialAuthSerializer
-    user_seriliser = None
+    social_serializer = SocialAuthSerializer
+    user_serializer = None
 
     def post(self, request):
-        serializer = self.socal_seriliser(data=request.DATA,
-                                          files=request.FILES)
+        serializer = self.social_serializer(data=request.DATA,
+                                            files=request.FILES)
 
         if serializer.is_valid():
             backend = serializer.data['backend']
@@ -73,10 +73,10 @@ class SocialAuthView(views.APIView):
 
         _do_login(strategy, user)
 
-        if not self.user_seriliser:
-            msg = 'SocialAuthView.user_seriliser should be a serializer.'
+        if not self.user_serializer:
+            msg = 'SocialAuthView.user_serializer should be a serializer.'
             raise ImproperlyConfigured(msg)
-        serializer = self.user_seriliser(user)
+        serializer = self.user_serializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
